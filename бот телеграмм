@@ -1,0 +1,44 @@
+import requests
+from telegram import Update
+from telegram.ext import Updater, CommandHandler, CallbackContext
+
+
+TELEGRAM_BOT_TOKEN = '7209203731:AAFjqYsYVxZOTaDYHvMHKxkML6mF5Uf1YaI'
+
+WEATHER_API_KEY = '7ee4263c284c6d5b1946d6c5a98825c7'
+CITY = 'Samara'
+
+def start(update: Update, context: CallbackContext) -> None:
+    update.message.reply_text('Привет! Я бот, который сообщает погоду в Самаре. Используй команду /weather для получения информации о погоде.')
+
+def get_weather(update: Update, context: CallbackContext) -> None:
+    url = f"http://api.openweathermap.org/data/2.5/weather?q={CITY}&appid={WEATHER_API_KEY}&units=metric"
+    response = requests.get(url)
+
+    if response.status_code == 200:
+        data = response.json()
+        weather_description = data['weather'][0]['description']
+        temperature = data['main']['temp']
+        humidity = data['main']['humidity']
+
+        weather_message = (f"Погода в {CITY}:n"
+                           f"Температура: {temperature}°Cn"
+                           f"Описание: {weather_description}n"
+                           f"Влажность: {humidity}%")
+    else:
+        weather_message = "Не удалось получить данные о погоде."
+
+    update.message.reply_text(weather_message)
+
+def main() -> None:
+    updater = Updater(TELEGRAM_BOT_TOKEN)
+
+    dispatcher = updater.dispatcher
+    dispatcher.add_handler(CommandHandler("start", start))
+    dispatcher.add_handler(CommandHandler("weather", get_weather))
+
+    updater.start_polling()
+    updater.idle()
+
+if __name__ == '__main__':
+    main()
